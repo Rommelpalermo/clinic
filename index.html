@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Clinic - Dashboard</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+      </div>
+      <div>
+        <div class="brand-title">Smart Clinic</div>
+        <div class="brand-sub">Trimex Colleges Inc.</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <a href="#" class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">▦</span> Dashboard
+      </a>
+      <a href="#" class="nav-item" data-page="patients">
+        <span class="nav-icon">👥</span> Patients
+      </a>
+      <a href="#" class="nav-item" data-page="visits">
+        <span class="nav-icon">🩺</span> Visits
+      </a>
+      <a href="#" class="nav-item" data-page="inventory">
+        <span class="nav-icon">📦</span> Inventory
+      </a>
+      <a href="#" class="nav-item" data-page="analytics">
+        <span class="nav-icon">📊</span> Analytics
+      </a>
+    </nav>
+    <a href="#" class="logout">⏻ Logout</a>
+  </aside>
+
+  <main class="content">
+    <div class="page" id="page-dashboard">
+      <header class="page-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p class="subtitle">Overview of clinic operations at Trimex Colleges Inc.</p>
+        </div>
+        <button class="btn-primary" id="newVisitBtn">🩺 New Visit</button>
+      </header>
+
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-text">
+            <span class="stat-label">Total Patients</span>
+            <span class="stat-value" id="statPatients">6</span>
+          </div>
+          <div class="stat-icon icon-blue">👥</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-text">
+            <span class="stat-label">Today's Visits</span>
+            <span class="stat-value" id="statVisits">0</span>
+          </div>
+          <div class="stat-icon icon-green">📈</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-text">
+            <span class="stat-label">Inventory Items</span>
+            <span class="stat-value" id="statInventory">10</span>
+          </div>
+          <div class="stat-icon icon-orange">📦</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-text">
+            <span class="stat-label">Low Stock Alerts</span>
+            <span class="stat-value" id="statLowStock">3</span>
+          </div>
+          <div class="stat-icon icon-red">⚠️</div>
+        </div>
+      </section>
+
+      <section class="panels-grid">
+        <div class="panel panel-wide">
+          <div class="panel-header">
+            <h2>Recent Visits</h2>
+            <a href="#" class="view-all">View all →</a>
+          </div>
+          <ul class="visit-list" id="visitList"></ul>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Low Stock Alerts</h2>
+            <a href="#" class="view-all">Manage →</a>
+          </div>
+          <ul class="stock-list" id="stockList"></ul>
+        </div>
+      </section>
+    </div>
+
+    <div class="page" id="page-patients" hidden>
+      <header class="page-header">
+        <div>
+          <h1>Patients</h1>
+          <p class="subtitle" id="patientCount">6 registered patients</p>
+        </div>
+        <button class="btn-primary" id="registerBtn">👤+ Register Patient</button>
+      </header>
+
+      <div class="search-bar">
+        <div class="search-input-wrap">
+          <span>🔍</span>
+          <input type="text" id="searchInput" placeholder="Search by name, ID, or course...">
+        </div>
+      </div>
+
+      <div class="table-panel">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Name</th>
+              <th>Course</th>
+              <th>Year</th>
+              <th>Blood Type</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="patientTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="page" id="page-visits" hidden>
+      <header class="page-header">
+        <div>
+          <h1>Medical Visits</h1>
+          <p class="subtitle" id="visitCount">8 total visits recorded</p>
+        </div>
+        <button class="btn-primary" id="newVisitBtn2">+ New Visit</button>
+      </header>
+
+      <div class="search-bar visit-filter-bar">
+        <div class="search-input-wrap">
+          <span>🔍</span>
+          <input type="text" id="visitSearchInput" placeholder="Search visits...">
+        </div>
+        <select id="severityFilter" class="severity-select">
+          <option value="all">All Severity</option>
+          <option value="mild">Mild</option>
+          <option value="moderate">Moderate</option>
+          <option value="severe">Severe</option>
+        </select>
+      </div>
+
+      <div class="table-panel">
+        <ul class="visit-record-list" id="visitRecordList"></ul>
+      </div>
+    </div>
+
+    <div class="page" id="page-inventory" hidden>
+      <header class="page-header">
+        <div>
+          <h1>Inventory</h1>
+          <p class="subtitle" id="inventoryCount">10 medical supplies tracked</p>
+        </div>
+        <button class="btn-primary" id="addItemBtn">+ Add Item</button>
+      </header>
+
+      <div class="search-bar visit-filter-bar">
+        <div class="search-input-wrap">
+          <span>🔍</span>
+          <input type="text" id="inventorySearchInput" placeholder="Search items...">
+        </div>
+        <select id="categoryFilter" class="severity-select">
+          <option value="all">All Categories</option>
+          <option value="Consumable">Consumable</option>
+          <option value="Equipment">Equipment</option>
+          <option value="Ppe">Ppe</option>
+          <option value="Medication">Medication</option>
+          <option value="First Aid">First Aid</option>
+        </select>
+      </div>
+
+      <div class="table-panel">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Qty</th>
+              <th>Expiry</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="page" id="page-analytics" hidden>
+      <header class="page-header">
+        <div>
+          <h1>Analytics</h1>
+          <p class="subtitle">Clinic performance insights and decision support</p>
+        </div>
+      </header>
+
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-text">
+            <span class="stat-label">Total Visits</span>
+            <span class="stat-value" id="analyticsTotalVisits">8</span>
+          </div>
+          <div class="stat-icon icon-blue">📈</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-text">
+            <span class="stat-label">Active Patients</span>
+            <span class="stat-value" id="analyticsActivePatients">6</span>
+          </div>
+          <div class="stat-icon icon-green">👥</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-text">
+            <span class="stat-label">Inventory Value</span>
+            <span class="stat-value" id="analyticsInventoryValue">₱21,475</span>
+          </div>
+          <div class="stat-icon icon-orange">📦</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-text">
+            <span class="stat-label">Low Stock Items</span>
+            <span class="stat-value" id="analyticsLowStock">3</span>
+          </div>
+          <div class="stat-icon icon-red">📈</div>
+        </div>
+      </section>
+
+      <section class="analytics-charts-grid">
+        <div class="chart-card">
+          <h2 class="chart-title">Monthly Visit Trend</h2>
+          <div id="visitTrendChart"></div>
+        </div>
+        <div class="chart-card">
+          <h2 class="chart-title">Severity Distribution</h2>
+          <div class="donut-wrap">
+            <div class="donut" id="severityDonut"></div>
+            <ul class="donut-legend" id="severityLegend"></ul>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h2 class="chart-title">Top Complaints</h2>
+          <ul class="bar-chart-list" id="complaintsBarList"></ul>
+        </div>
+        <div class="chart-card">
+          <h2 class="chart-title">Inventory by Category</h2>
+          <div class="donut-wrap">
+            <div class="donut" id="categoryDonut"></div>
+            <ul class="donut-legend" id="categoryLegend"></ul>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="registerModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Register Patient</h2>
+      <button class="modal-close" id="closeModal">✕</button>
+    </div>
+    <form id="registerForm">
+      <div class="form-row">
+        <label>Student ID</label>
+        <input type="text" id="fId" required placeholder="e.g. TCI-2024-0007">
+      </div>
+      <div class="form-row">
+        <label>Full Name</label>
+        <input type="text" id="fName" required placeholder="e.g. Juan Dela Cruz">
+      </div>
+      <div class="form-row">
+        <label>Course</label>
+        <input type="text" id="fCourse" required placeholder="e.g. BS Nursing">
+      </div>
+      <div class="form-row">
+        <label>Year</label>
+        <select id="fYear">
+          <option>1st Year</option>
+          <option>2nd Year</option>
+          <option>3rd Year</option>
+          <option>4th Year</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Blood Type</label>
+        <select id="fBlood">
+          <option>Unknown</option>
+          <option>A+</option>
+          <option>A-</option>
+          <option>B+</option>
+          <option>B-</option>
+          <option>AB+</option>
+          <option>AB-</option>
+          <option>O+</option>
+          <option>O-</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancelModal">Cancel</button>
+        <button type="submit" class="btn-primary">Register Patient</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addItemModal">
+  <div class="modal inventory-modal" role="dialog" aria-modal="true" aria-labelledby="addItemTitle">
+    <div class="modal-header">
+      <h2 id="addItemTitle">Add Inventory Item</h2>
+      <button type="button" class="modal-close" id="closeAddItemModal" aria-label="Close">✕</button>
+    </div>
+    <form id="addItemForm">
+      <div class="inventory-form-grid">
+        <div class="form-row full-width">
+          <label for="itemName">Item Name *</label>
+          <input type="text" id="itemName" required>
+        </div>
+        <div class="form-row">
+          <label for="itemCategory">Category *</label>
+          <select id="itemCategory" required>
+            <option value="Consumable">Consumable</option>
+            <option value="Equipment">Equipment</option>
+            <option value="Ppe">Ppe</option>
+            <option value="Medication" selected>Medication</option>
+            <option value="First Aid">First Aid</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="itemUnit">Unit</label>
+          <select id="itemUnit">
+            <option value="pieces">Pieces</option>
+            <option value="boxes">Boxes</option>
+            <option value="bottles">Bottles</option>
+            <option value="packs">Packs</option>
+            <option value="rolls">Rolls</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="itemQuantity">Quantity *</label>
+          <input type="number" id="itemQuantity" min="0" step="1" value="0" required>
+        </div>
+        <div class="form-row">
+          <label for="itemMinimum">Minimum Stock</label>
+          <input type="number" id="itemMinimum" min="0" step="1" value="0">
+        </div>
+        <div class="form-row">
+          <label for="itemCost">Unit Cost (₱)</label>
+          <input type="number" id="itemCost" min="0" step="0.01" value="0">
+        </div>
+        <div class="form-row">
+          <label for="itemExpiry">Expiry Date</label>
+          <input type="date" id="itemExpiry">
+        </div>
+        <div class="form-row">
+          <label for="itemLocation">Location</label>
+          <input type="text" id="itemLocation">
+        </div>
+        <div class="form-row">
+          <label for="itemSupplier">Supplier</label>
+          <input type="text" id="itemSupplier">
+        </div>
+        <div class="form-row full-width">
+          <label for="itemDescription">Description</label>
+          <textarea id="itemDescription" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancelAddItem">Cancel</button>
+        <button type="submit" class="btn-primary">Add Item</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="newVisitModal">
+  <div class="modal visit-modal" role="dialog" aria-modal="true" aria-labelledby="newVisitTitle">
+    <div class="modal-header">
+      <h2 id="newVisitTitle">Record New Visit</h2>
+      <button type="button" class="modal-close" id="closeNewVisitModal" aria-label="Close">✕</button>
+    </div>
+    <form id="newVisitForm">
+      <div class="visit-form-grid">
+        <div class="form-row full-width">
+          <label for="visitPatient">Patient *</label>
+          <select id="visitPatient" required>
+            <option value="">Select patient</option>
+          </select>
+        </div>
+        <div class="form-row full-width">
+          <label for="visitComplaint">Chief Complaint *</label>
+          <textarea id="visitComplaint" rows="3" required></textarea>
+        </div>
+        <div class="form-row">
+          <label for="visitSeverity">Severity</label>
+          <select id="visitSeverity">
+            <option value="mild">Mild</option>
+            <option value="moderate">Moderate</option>
+            <option value="severe">Severe</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="visitStaff">Attending Staff</label>
+          <input type="text" id="visitStaff">
+        </div>
+        <fieldset class="vital-signs full-width">
+          <legend>Vital Signs</legend>
+          <div class="vital-signs-grid">
+            <div class="form-row">
+              <label for="visitTemperature">Temp (°C)</label>
+              <input type="number" id="visitTemperature" min="25" max="45" step="0.1">
+            </div>
+            <div class="form-row">
+              <label for="visitBloodPressure">BP</label>
+              <input type="text" id="visitBloodPressure" placeholder="120/80">
+            </div>
+            <div class="form-row">
+              <label for="visitPulse">Pulse</label>
+              <input type="number" id="visitPulse" min="0" step="1">
+            </div>
+            <div class="form-row">
+              <label for="visitRespRate">Resp Rate</label>
+              <input type="number" id="visitRespRate" min="0" step="1">
+            </div>
+            <div class="form-row">
+              <label for="visitWeight">Weight (kg)</label>
+              <input type="number" id="visitWeight" min="0" step="0.1">
+            </div>
+          </div>
+        </fieldset>
+        <div class="form-row">
+          <label for="visitDiagnosis">Diagnosis</label>
+          <textarea id="visitDiagnosis" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <label for="visitTreatment">Treatment</label>
+          <textarea id="visitTreatment" rows="3"></textarea>
+        </div>
+        <div class="form-row full-width">
+          <label for="visitMedication">Medications Given</label>
+          <input type="text" id="visitMedication">
+        </div>
+        <div class="form-row full-width">
+          <label for="visitNotes">Notes</label>
+          <textarea id="visitNotes" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <label for="visitStatus">Status</label>
+          <select id="visitStatus">
+            <option value="inprogress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="followup">Follow-up Needed</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancelNewVisit">Cancel</button>
+        <button type="submit" class="btn-primary">Record Visit</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
