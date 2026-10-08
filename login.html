@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Sign In | Smart Clinic</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-page">
+  <main class="auth-panel">
+    <div class="auth-brand">
+      <div class="brand-icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+      </div>
+      <div>
+        <div class="brand-title">Smart Clinic</div>
+        <div class="brand-sub">Trimex Colleges Inc.</div>
+      </div>
+    </div>
+
+    <h1 id="authTitle">Admin sign in</h1>
+    <p class="auth-description" id="authDescription">Sign in to access the clinic dashboard.</p>
+    <p class="auth-message" id="authMessage" role="alert" aria-live="polite"></p>
+
+    <form id="authForm">
+      <div class="form-row">
+        <label for="authUsername">Admin username</label>
+        <input id="authUsername" name="username" type="text" required minlength="3" maxlength="80" autocomplete="username">
+      </div>
+      <div class="form-row">
+        <label for="authPassword">Password</label>
+        <input id="authPassword" name="password" type="password" required maxlength="72" autocomplete="current-password">
+      </div>
+      <div class="form-row" id="confirmPasswordRow" hidden>
+        <label for="authPasswordConfirm">Confirm password</label>
+        <input id="authPasswordConfirm" name="passwordConfirm" type="password" maxlength="72" autocomplete="new-password">
+      </div>
+      <button class="btn-primary" id="authSubmit" type="submit">Sign in</button>
+    </form>
+  </main>
+  <script src="login.js?v=admin-auth"></script>
+</body>
+</html>

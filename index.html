@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" class="auth-pending">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -95,6 +96,14 @@
           </div>
           <ul class="stock-list" id="stockList"></ul>
         </div>
+      </section>
+
+      <section class="panel followup-panel">
+        <div class="panel-header">
+          <h2>Follow-up email notifications</h2>
+          <span class="panel-count" id="followupCount">0 follow-ups</span>
+        </div>
+        <ul class="followup-list" id="followupList"></ul>
       </section>
     </div>
 
@@ -268,50 +277,126 @@
 </div>
 
 <div class="modal-overlay" id="registerModal">
-  <div class="modal">
+  <div class="modal patient-modal" role="dialog" aria-modal="true" aria-labelledby="registerModalTitle">
     <div class="modal-header">
-      <h2>Register Patient</h2>
-      <button class="modal-close" id="closeModal">✕</button>
+      <h2 id="registerModalTitle">Register Patient</h2>
+      <button type="button" class="modal-close" id="closeModal" aria-label="Close">✕</button>
     </div>
     <form id="registerForm">
-      <div class="form-row">
-        <label>Student ID</label>
-        <input type="text" id="fId" required placeholder="e.g. TCI-2024-0007">
-      </div>
-      <div class="form-row">
-        <label>Full Name</label>
-        <input type="text" id="fName" required placeholder="e.g. Juan Dela Cruz">
-      </div>
-      <div class="form-row">
-        <label>Course</label>
-        <input type="text" id="fCourse" required placeholder="e.g. BS Nursing">
-      </div>
-      <div class="form-row">
-        <label>Year</label>
-        <select id="fYear">
-          <option>1st Year</option>
-          <option>2nd Year</option>
-          <option>3rd Year</option>
-          <option>4th Year</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label>Blood Type</label>
-        <select id="fBlood">
-          <option>Unknown</option>
-          <option>A+</option>
-          <option>A-</option>
-          <option>B+</option>
-          <option>B-</option>
-          <option>AB+</option>
-          <option>AB-</option>
-          <option>O+</option>
-          <option>O-</option>
-        </select>
+      <div class="patient-form-grid">
+        <div class="form-row">
+          <label for="fId">Student ID *</label>
+          <input type="text" id="fId" required placeholder="e.g. TCI-2024-0007">
+        </div>
+        <div class="form-row">
+          <label for="fFirstName">First Name *</label>
+          <input type="text" id="fFirstName" required autocomplete="given-name">
+        </div>
+        <div class="form-row">
+          <label for="fLastName">Last Name *</label>
+          <input type="text" id="fLastName" required autocomplete="family-name">
+        </div>
+        <div class="form-row">
+          <label for="fDateOfBirth">Date of Birth</label>
+          <input type="date" id="fDateOfBirth" autocomplete="bday">
+        </div>
+        <div class="form-row">
+          <label for="fGender">Gender</label>
+          <select id="fGender">
+            <option value="">Select gender</option>
+            <option>Female</option>
+            <option>Male</option>
+            <option>Other</option>
+            <option>Prefer not to say</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="fContactNumber">Contact Number</label>
+          <input type="tel" id="fContactNumber" autocomplete="tel">
+        </div>
+        <div class="form-row">
+          <label for="fEmail">Email</label>
+          <input type="email" id="fEmail" autocomplete="email">
+        </div>
+        <div class="form-row">
+          <label for="fCourse">Course</label>
+          <input type="text" id="fCourse" required placeholder="e.g. BS Nursing">
+        </div>
+        <div class="form-row">
+          <label for="fYear">Year Level</label>
+          <select id="fYear">
+            <option>1st Year</option>
+            <option>2nd Year</option>
+            <option>3rd Year</option>
+            <option>4th Year</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="fBlood">Blood Type</label>
+          <select id="fBlood">
+            <option>Unknown</option>
+            <option>A+</option>
+            <option>A-</option>
+            <option>B+</option>
+            <option>B-</option>
+            <option>AB+</option>
+            <option>AB-</option>
+            <option>O+</option>
+            <option>O-</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="fEmergencyContact">Emergency Contact</label>
+          <input type="text" id="fEmergencyContact">
+        </div>
+        <div class="form-row">
+          <label for="fEmergencyContactNumber">Emergency Contact #</label>
+          <input type="tel" id="fEmergencyContactNumber">
+        </div>
+        <div class="form-row full-width">
+          <label for="fAllergies">Allergies</label>
+          <textarea id="fAllergies" rows="2"></textarea>
+        </div>
+        <div class="form-row full-width">
+          <label for="fExistingConditions">Existing Conditions</label>
+          <textarea id="fExistingConditions" rows="2"></textarea>
+        </div>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn-secondary" id="cancelModal">Cancel</button>
-        <button type="submit" class="btn-primary">Register Patient</button>
+        <button type="submit" class="btn-primary" id="savePatientButton">Register Patient</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="emailNotificationModal">
+  <div class="modal email-modal" role="dialog" aria-modal="true" aria-labelledby="emailNotificationTitle">
+    <div class="modal-header">
+      <h2 id="emailNotificationTitle">Email patient</h2>
+      <button type="button" class="modal-close" id="closeEmailNotification" aria-label="Close">✕</button>
+    </div>
+    <form id="emailNotificationForm">
+      <p class="email-recipient" id="emailRecipient"></p>
+      <div class="form-row">
+        <label for="emailNotificationType">Message type</label>
+        <select id="emailNotificationType">
+          <option value="followup">Follow-up checkup reminder</option>
+          <option value="update">Patient update</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="emailNotificationSubject">Subject *</label>
+        <input type="text" id="emailNotificationSubject" maxlength="180" required>
+      </div>
+      <div class="form-row">
+        <label for="emailNotificationBody">Message *</label>
+        <textarea id="emailNotificationBody" rows="7" maxlength="5000" required></textarea>
+      </div>
+      <p class="email-feedback" id="emailNotificationFeedback" role="status" aria-live="polite"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancelEmailNotification">Cancel</button>
+        <button type="submit" class="btn-primary" id="sendEmailNotification">Send email</button>
       </div>
     </form>
   </div>
@@ -380,7 +465,7 @@
       </div>
       <div class="modal-actions">
         <button type="button" class="btn-secondary" id="cancelAddItem">Cancel</button>
-        <button type="submit" class="btn-primary">Add Item</button>
+        <button type="submit" class="btn-primary" id="saveInventoryButton">Add Item</button>
       </div>
     </form>
   </div>
@@ -450,8 +535,12 @@
           <textarea id="visitTreatment" rows="3"></textarea>
         </div>
         <div class="form-row full-width">
-          <label for="visitMedication">Medications Given</label>
-          <input type="text" id="visitMedication">
+          <div class="medication-request-header">
+            <label>Medications Given</label>
+            <button type="button" class="btn-secondary medication-add-button" id="addMedicationRequest">+ Add medication</button>
+          </div>
+          <div class="medication-request-list" id="medicationRequestList"></div>
+          <p class="medication-stock-message" id="medicationStockMessage" hidden>No medication items are currently in stock.</p>
         </div>
         <div class="form-row full-width">
           <label for="visitNotes">Notes</label>
@@ -474,6 +563,6 @@
   </div>
 </div>
 
-<script src="script.js"></script>
+<script src="script.js?v=medication-stock"></script>
 </body>
 </html>

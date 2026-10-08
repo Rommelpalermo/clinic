@@ -55,6 +55,7 @@ async function apiRequest(payload) {
     : {};
   const response = await fetch("api.php", options);
   const result = await response.json();
+  if (response.status === 401) window.location.replace("login.html");
   if (!response.ok) throw new Error(result.error || "The database request failed.");
   return result;
 }
@@ -75,6 +76,7 @@ async function loadClinicData() {
     renderVisits();
     renderStock();
     renderPatients(patients);
+    renderFollowupNotifications();
     renderVisitRecords(visits);
     renderInventory(inventory);
     renderAnalytics();
@@ -134,10 +136,36 @@ function renderPatients(list) {
       <td>${escapeHtml(p.year)}</td>
       <td>${escapeHtml(p.blood)}</td>
       <td><span class="status-${escapeHtml(p.status)}">${escapeHtml(p.status)}</span></td>
-      <td><a href="#" class="edit-link">Edit</a></td>
+      <td><div class="patient-actions">
+        <button type="button" class="edit-link" data-patient-edit="${escapeHtml(p.id)}">Edit</button>
+        <button type="button" class="edit-link" data-patient-email="${escapeHtml(p.id)}" ${p.email ? "" : "disabled title=\"Add an email address to this patient first\""}>Email</button>
+      </div></td>
     </tr>
   `).join("");
   document.getElementById("patientCount").textContent = `${patients.length} registered patients`;
+}
+
+function renderFollowupNotifications() {
+  const followups = visits.filter(visit => visit.status === "followup");
+  const list = document.getElementById("followupList");
+  document.getElementById("followupCount").textContent = `${followups.length} follow-up${followups.length === 1 ? "" : "s"}`;
+  if (!followups.length) {
+    list.innerHTML = '<li class="followup-empty">No patients currently need follow-up.</li>';
+    return;
+  }
+  list.innerHTML = followups.map(visit => {
+    const patient = patients.find(item => item.id === visit.patientId);
+    return `
+      <li>
+        <div class="followup-details">
+          <strong>${escapeHtml(visit.name)}</strong>
+          <span>${escapeHtml(visit.reason)} · ${escapeHtml(visit.fullDate)}</span>
+          <span class="followup-email">${escapeHtml(patient?.email || "No email address on file")}</span>
+        </div>
+        <button type="button" class="btn-secondary followup-send" data-followup-email="${escapeHtml(visit.patientId)}" data-followup-reason="${escapeHtml(visit.reason)}" ${patient?.email ? "" : "disabled"}>Send reminder</button>
+      </li>
+    `;
+  }).join("");
 }
 
 function renderVisitRecords(list) {
@@ -171,7 +199,7 @@ function renderInventory(list) {
       <td><span class="qty-value ${item.status === "lowstock" ? "qty-low" : ""}">${escapeHtml(item.qty)}</span> ${escapeHtml(item.unit)}</td>
       <td class="${item.warn ? "expiry-warning" : ""}">${item.warn ? "⚠ " : ""}${escapeHtml(item.expiry)}</td>
       <td><span class="status-${item.status}">${item.status === "lowstock" ? "low stock" : "in stock"}</span></td>
-      <td><a href="#" class="edit-link">Edit</a></td>
+      <td><button type="button" class="edit-link" data-inventory-edit="${escapeHtml(item.id)}">Edit</button></td>
     </tr>
   `).join("");
   document.getElementById("inventoryCount").textContent = `${inventory.length} medical supplies tracked`;
@@ -293,26 +321,61 @@ document.getElementById("inventorySearchInput").addEventListener("input", filter
 document.getElementById("categoryFilter").addEventListener("change", filterInventory);
 const addItemModal = document.getElementById("addItemModal");
 const addItemForm = document.getElementById("addItemForm");
+let editingInventoryId = null;
 
 function closeAddItemModal() {
   addItemModal.classList.remove("open");
   addItemForm.reset();
+  editingInventoryId = null;
 }
 
-document.getElementById("addItemBtn").addEventListener("click", () => {
+function openAddItemModal() {
+  editingInventoryId = null;
+  addItemForm.reset();
+  document.getElementById("addItemTitle").textContent = "Add Inventory Item";
+  document.getElementById("saveInventoryButton").textContent = "Add Item";
   addItemModal.classList.add("open");
   document.getElementById("itemName").focus();
-});
+}
+
+function openInventoryEdit(item) {
+  editingInventoryId = item.id;
+  document.getElementById("itemName").value = item.name;
+  document.getElementById("itemCategory").value = item.category;
+  document.getElementById("itemUnit").value = item.unit;
+  document.getElementById("itemQuantity").value = item.qty;
+  document.getElementById("itemMinimum").value = item.min;
+  document.getElementById("itemCost").value = item.unitCost;
+  document.getElementById("itemExpiry").value = item.expiryDate || "";
+  document.getElementById("itemLocation").value = item.location || "";
+  document.getElementById("itemSupplier").value = item.supplier || "";
+  document.getElementById("itemDescription").value = item.description || "";
+  document.getElementById("addItemTitle").textContent = "Edit Item";
+  document.getElementById("saveInventoryButton").textContent = "Save Changes";
+  addItemModal.classList.add("open");
+  document.getElementById("itemName").focus();
+}
+
+document.getElementById("addItemBtn").addEventListener("click", openAddItemModal);
 document.getElementById("closeAddItemModal").addEventListener("click", closeAddItemModal);
 document.getElementById("cancelAddItem").addEventListener("click", closeAddItemModal);
 addItemModal.addEventListener("click", (event) => {
   if (event.target === addItemModal) closeAddItemModal();
 });
 
+document.getElementById("inventoryTableBody").addEventListener("click", (event) => {
+  const editButton = event.target.closest("[data-inventory-edit]");
+  if (!editButton) return;
+  const item = inventory.find(row => String(row.id) === editButton.dataset.inventoryEdit);
+  if (item) openInventoryEdit(item);
+});
+
 addItemForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const payload = {
     type: "inventory",
+    action: editingInventoryId ? "update" : "create",
+    id: editingInventoryId,
     name: document.getElementById("itemName").value.trim(),
     category: document.getElementById("itemCategory").value,
     unit: document.getElementById("itemUnit").value,
@@ -330,7 +393,7 @@ addItemForm.addEventListener("submit", async (event) => {
     await loadClinicData();
     closeAddItemModal();
   } catch (error) {
-    alert(`Could not save inventory item: ${error.message}`);
+    alert(`Could not ${editingInventoryId ? "update" : "save"} inventory item: ${error.message}`);
   }
 });
 
@@ -347,6 +410,7 @@ function populateVisitPatients() {
 
 function openNewVisitModal() {
   populateVisitPatients();
+  renderMedicationRequestRows();
   newVisitModal.classList.add("open");
   visitPatientSelect.focus();
 }
@@ -354,6 +418,7 @@ function openNewVisitModal() {
 function closeNewVisitModal() {
   newVisitModal.classList.remove("open");
   newVisitForm.reset();
+  document.getElementById("medicationRequestList").replaceChildren();
 }
 
 document.getElementById("newVisitBtn").addEventListener("click", openNewVisitModal);
@@ -364,8 +429,58 @@ newVisitModal.addEventListener("click", (event) => {
   if (event.target === newVisitModal) closeNewVisitModal();
 });
 
+const medicationRequestList = document.getElementById("medicationRequestList");
+const addMedicationRequestButton = document.getElementById("addMedicationRequest");
+
+function availableMedicationItems() {
+  return inventory.filter(item => item.category === "Medication" && Number(item.qty) > 0);
+}
+
+function renderMedicationRequestRows() {
+  const available = availableMedicationItems();
+  const noStock = available.length === 0;
+  addMedicationRequestButton.disabled = noStock;
+  document.getElementById("medicationStockMessage").hidden = !noStock;
+}
+
+function addMedicationRequestRow() {
+  const available = availableMedicationItems();
+  if (!available.length) return;
+  const options = available.map(item =>
+    `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} (${escapeHtml(item.qty)} available)</option>`
+  ).join("");
+  medicationRequestList.insertAdjacentHTML("beforeend", `
+    <div class="medication-request-row">
+      <select class="medication-item-select" aria-label="Medication" required>
+        <option value="" disabled selected>Select medication</option>
+        ${options}
+      </select>
+      <input class="medication-quantity" type="number" min="1" step="1" value="1" aria-label="Quantity" required>
+      <button type="button" class="medication-remove-button" aria-label="Remove medication">×</button>
+    </div>
+  `);
+  const row = medicationRequestList.lastElementChild;
+  const select = row.querySelector(".medication-item-select");
+  const quantity = row.querySelector(".medication-quantity");
+  select.addEventListener("change", () => {
+    const selectedItem = available.find(item => String(item.id) === select.value);
+    quantity.max = selectedItem ? selectedItem.qty : "";
+    if (selectedItem && Number(quantity.value) > Number(selectedItem.qty)) {
+      quantity.value = selectedItem.qty;
+    }
+  });
+  row.querySelector(".medication-remove-button").addEventListener("click", () => row.remove());
+  select.focus();
+}
+
+addMedicationRequestButton.addEventListener("click", addMedicationRequestRow);
+
 newVisitForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const medicationRequests = [...medicationRequestList.querySelectorAll(".medication-request-row")].map(row => ({
+    itemId: Number(row.querySelector(".medication-item-select").value),
+    quantity: Number(row.querySelector(".medication-quantity").value),
+  }));
   const payload = {
     type: "visit",
     patientId: visitPatientSelect.value,
@@ -382,7 +497,7 @@ newVisitForm.addEventListener("submit", async (event) => {
       weight: document.getElementById("visitWeight").value,
     },
     treatment: document.getElementById("visitTreatment").value.trim(),
-    medications: document.getElementById("visitMedication").value.trim(),
+    medicationRequests,
     notes: document.getElementById("visitNotes").value.trim(),
   };
   try {
@@ -419,11 +534,46 @@ document.getElementById("severityFilter").addEventListener("change", filterVisit
 
 const registerModal = document.getElementById("registerModal");
 const registerForm = document.getElementById("registerForm");
+let editingPatientId = null;
 
-function openModal() { registerModal.classList.add("open"); }
+function openModal() {
+  editingPatientId = null;
+  registerForm.reset();
+  document.getElementById("registerModalTitle").textContent = "Register Patient";
+  document.getElementById("savePatientButton").textContent = "Register Patient";
+  document.getElementById("fId").readOnly = false;
+  registerModal.classList.add("open");
+}
+
+function openPatientEdit(patient) {
+  editingPatientId = patient.id;
+  document.getElementById("fId").value = patient.id;
+  document.getElementById("fId").readOnly = true;
+  const nameParts = patient.name.trim().split(/\s+/);
+  document.getElementById("fFirstName").value = patient.firstName || nameParts.slice(0, -1).join(" ") || patient.name;
+  document.getElementById("fLastName").value = patient.lastName || nameParts.slice(-1)[0] || "";
+  document.getElementById("fDateOfBirth").value = patient.dateOfBirth || "";
+  document.getElementById("fGender").value = patient.gender || "";
+  document.getElementById("fContactNumber").value = patient.contactNumber || "";
+  document.getElementById("fEmail").value = patient.email || "";
+  document.getElementById("fCourse").value = patient.course;
+  document.getElementById("fYear").value = patient.year;
+  document.getElementById("fBlood").value = patient.blood;
+  document.getElementById("fEmergencyContact").value = patient.emergencyContact || "";
+  document.getElementById("fEmergencyContactNumber").value = patient.emergencyContactNumber || "";
+  document.getElementById("fAllergies").value = patient.allergies || "";
+  document.getElementById("fExistingConditions").value = patient.existingConditions || "";
+  document.getElementById("registerModalTitle").textContent = "Edit Patient";
+  document.getElementById("savePatientButton").textContent = "Save Changes";
+  registerModal.classList.add("open");
+  document.getElementById("fFirstName").focus();
+}
+
 function closeModal() {
   registerModal.classList.remove("open");
   registerForm.reset();
+  editingPatientId = null;
+  document.getElementById("fId").readOnly = false;
 }
 
 document.getElementById("registerBtn").addEventListener("click", openModal);
@@ -433,22 +583,138 @@ registerModal.addEventListener("click", (e) => {
   if (e.target === registerModal) closeModal();
 });
 
+document.getElementById("patientTableBody").addEventListener("click", (event) => {
+  const emailButton = event.target.closest("[data-patient-email]");
+  if (emailButton) {
+    const patient = patients.find(item => item.id === emailButton.dataset.patientEmail);
+    if (patient) openEmailNotification(patient);
+    return;
+  }
+  const editLink = event.target.closest("[data-patient-edit]");
+  if (!editLink) return;
+  event.preventDefault();
+  const patient = patients.find(item => item.id === editLink.dataset.patientEdit);
+  if (patient) openPatientEdit(patient);
+});
+
+const emailNotificationModal = document.getElementById("emailNotificationModal");
+const emailNotificationForm = document.getElementById("emailNotificationForm");
+let notificationPatient = null;
+let notificationFollowupReason = "";
+
+function updateEmailTemplate() {
+  if (!notificationPatient) return;
+  const isFollowup = document.getElementById("emailNotificationType").value === "followup";
+  const subject = document.getElementById("emailNotificationSubject");
+  const body = document.getElementById("emailNotificationBody");
+  subject.value = isFollowup ? "Follow-up checkup reminder" : "An update from the Trimex Colleges clinic";
+  body.value = isFollowup
+    ? [
+      `Dear ${notificationPatient.name},`,
+      "",
+      `Our clinic would like to remind you to schedule a follow-up checkup${notificationFollowupReason ? ` regarding ${notificationFollowupReason}` : ""}. Please contact the clinic to arrange a convenient time.`,
+      "",
+      "Regards,",
+      "Trimex Colleges Clinic",
+    ].join("\n")
+    : [
+      `Dear ${notificationPatient.name},`,
+      "",
+      "We are contacting you with an update from the Trimex Colleges clinic.",
+      "",
+      "Regards,",
+      "Trimex Colleges Clinic",
+    ].join("\n");
+}
+
+function openEmailNotification(patient, reason = "") {
+  notificationPatient = patient;
+  notificationFollowupReason = reason;
+  emailNotificationForm.reset();
+  document.getElementById("emailRecipient").textContent = `To: ${patient.name} <${patient.email}>`;
+  document.getElementById("emailNotificationFeedback").textContent = "";
+  document.getElementById("emailNotificationType").value = reason ? "followup" : "update";
+  updateEmailTemplate();
+  document.getElementById("sendEmailNotification").disabled = false;
+  document.getElementById("sendEmailNotification").textContent = "Send email";
+  emailNotificationModal.classList.add("open");
+  document.getElementById("emailNotificationSubject").focus();
+}
+
+function closeEmailNotification() {
+  emailNotificationModal.classList.remove("open");
+  emailNotificationForm.reset();
+  notificationPatient = null;
+  notificationFollowupReason = "";
+}
+
+document.getElementById("followupList").addEventListener("click", event => {
+  const button = event.target.closest("[data-followup-email]");
+  if (!button) return;
+  const patient = patients.find(item => item.id === button.dataset.followupEmail);
+  if (patient) openEmailNotification(patient, button.dataset.followupReason);
+});
+document.getElementById("emailNotificationType").addEventListener("change", updateEmailTemplate);
+document.getElementById("closeEmailNotification").addEventListener("click", closeEmailNotification);
+document.getElementById("cancelEmailNotification").addEventListener("click", closeEmailNotification);
+emailNotificationModal.addEventListener("click", event => {
+  if (event.target === emailNotificationModal) closeEmailNotification();
+});
+
+emailNotificationForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!notificationPatient) return;
+  const submitButton = document.getElementById("sendEmailNotification");
+  const feedback = document.getElementById("emailNotificationFeedback");
+  submitButton.disabled = true;
+  feedback.className = "email-feedback";
+  feedback.textContent = "Sending email...";
+  try {
+    await apiRequest({
+      type: "email_notification",
+      patientId: notificationPatient.id,
+      subject: document.getElementById("emailNotificationSubject").value.trim(),
+      message: document.getElementById("emailNotificationBody").value.trim(),
+    });
+    feedback.classList.add("success");
+    feedback.textContent = "Email accepted for delivery.";
+    submitButton.textContent = "Sent";
+  } catch (error) {
+    feedback.classList.add("error");
+    feedback.textContent = error.message;
+    submitButton.disabled = false;
+  }
+});
+
 registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const firstName = document.getElementById("fFirstName").value.trim();
+  const lastName = document.getElementById("fLastName").value.trim();
   const payload = {
     type: "patient",
-    id: document.getElementById("fId").value.trim(),
-    name: document.getElementById("fName").value.trim(),
+    action: editingPatientId ? "update" : "create",
+    id: editingPatientId || document.getElementById("fId").value.trim(),
+    firstName,
+    lastName,
+    name: `${firstName} ${lastName}`.trim(),
+    dateOfBirth: document.getElementById("fDateOfBirth").value,
+    gender: document.getElementById("fGender").value,
+    contactNumber: document.getElementById("fContactNumber").value.trim(),
+    email: document.getElementById("fEmail").value.trim(),
     course: document.getElementById("fCourse").value.trim(),
     year: document.getElementById("fYear").value,
     blood: document.getElementById("fBlood").value,
+    emergencyContact: document.getElementById("fEmergencyContact").value.trim(),
+    emergencyContactNumber: document.getElementById("fEmergencyContactNumber").value.trim(),
+    allergies: document.getElementById("fAllergies").value.trim(),
+    existingConditions: document.getElementById("fExistingConditions").value.trim(),
   };
   try {
     await apiRequest(payload);
     await loadClinicData();
     closeModal();
   } catch (error) {
-    alert(`Could not save patient: ${error.message}`);
+    alert(`Could not ${editingPatientId ? "update" : "save"} patient: ${error.message}`);
   }
 });
 
@@ -465,11 +731,42 @@ document.querySelectorAll(".nav-item").forEach(item => {
   });
 });
 
-renderVisits();
-renderStock();
-renderPatients(patients);
-renderVisitRecords(visits);
-renderInventory(inventory);
-renderAnalytics();
-updateVisitSummary();
-loadClinicData();
+document.querySelector(".logout").addEventListener("click", async (event) => {
+  event.preventDefault();
+  try {
+    await fetch("api.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "auth", action: "logout" }),
+    });
+  } finally {
+    window.location.replace("login.html");
+  }
+});
+
+async function initializeClinic() {
+  try {
+    const response = await fetch("api.php?action=auth-status");
+    if (!response.ok) throw new Error("Could not verify the admin session.");
+    const auth = await response.json();
+    if (!auth.authenticated) {
+      window.location.replace("login.html");
+      return;
+    }
+    document.querySelector(".logout").textContent = `⏻ Log out (${auth.username})`;
+    renderVisits();
+    renderStock();
+    renderPatients(patients);
+    renderFollowupNotifications();
+    renderVisitRecords(visits);
+    renderInventory(inventory);
+    renderAnalytics();
+    updateVisitSummary();
+    document.documentElement.classList.remove("auth-pending");
+    await loadClinicData();
+  } catch (error) {
+    window.location.replace("login.html");
+  }
+}
+
+initializeClinic();
