@@ -118,6 +118,15 @@ html.auth-pending body { visibility: hidden; }
 
 .logout:hover { color: #fff; }
 
+.account-password {
+  padding: 10px 12px;
+  color: #9aa3b2;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.account-password:hover { color: #fff; }
+
 .auth-page {
   min-height: 100vh;
   display: grid;
@@ -608,6 +617,8 @@ html.auth-pending body { visibility: hidden; }
 .email-feedback.success { color: #15803d; }
 .email-feedback.error { color: #b91c1c; }
 
+.email-feedback:not(:empty) { margin-bottom: 12px; }
+
 @media (max-width: 560px) {
   .followup-list li { align-items: flex-start; flex-direction: column; }
   .followup-send { align-self: flex-start; }
@@ -777,6 +788,8 @@ html.auth-pending body { visibility: hidden; }
   gap: 6px;
   margin-bottom: 14px;
 }
+
+.form-row[hidden] { display: none; }
 
 .form-row label {
   font-size: 13px;

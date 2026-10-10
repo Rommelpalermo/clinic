@@ -744,6 +744,59 @@ document.querySelector(".logout").addEventListener("click", async (event) => {
   }
 });
 
+const changePasswordModal = document.getElementById("changePasswordModal");
+const changePasswordForm = document.getElementById("changePasswordForm");
+const changePasswordFeedback = document.getElementById("changePasswordFeedback");
+const saveAdminPassword = document.getElementById("saveAdminPassword");
+
+function closeChangePasswordModal() {
+  changePasswordModal.classList.remove("open");
+  changePasswordForm.reset();
+  changePasswordFeedback.textContent = "";
+  changePasswordFeedback.className = "email-feedback";
+  saveAdminPassword.disabled = false;
+  saveAdminPassword.textContent = "Update password";
+}
+
+document.getElementById("openChangePassword").addEventListener("click", (event) => {
+  event.preventDefault();
+  closeChangePasswordModal();
+  changePasswordModal.classList.add("open");
+  document.getElementById("currentAdminPassword").focus();
+});
+
+document.getElementById("closeChangePassword").addEventListener("click", closeChangePasswordModal);
+document.getElementById("cancelChangePassword").addEventListener("click", closeChangePasswordModal);
+changePasswordModal.addEventListener("click", (event) => {
+  if (event.target === changePasswordModal) closeChangePasswordModal();
+});
+
+changePasswordForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  changePasswordFeedback.textContent = "";
+  changePasswordFeedback.className = "email-feedback";
+  saveAdminPassword.disabled = true;
+  saveAdminPassword.textContent = "Updating...";
+  try {
+    await apiRequest({
+      type: "auth",
+      action: "change-password",
+      currentPassword: document.getElementById("currentAdminPassword").value,
+      password: document.getElementById("newAdminPassword").value,
+      passwordConfirm: document.getElementById("confirmAdminPassword").value,
+    });
+    changePasswordForm.reset();
+    changePasswordFeedback.textContent = "Password changed successfully.";
+    changePasswordFeedback.classList.add("success");
+    saveAdminPassword.textContent = "Updated";
+  } catch (error) {
+    changePasswordFeedback.textContent = error.message;
+    changePasswordFeedback.classList.add("error");
+    saveAdminPassword.disabled = false;
+    saveAdminPassword.textContent = "Update password";
+  }
+});
+
 async function initializeClinic() {
   try {
     const response = await fetch("api.php?action=auth-status");

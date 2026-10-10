@@ -1,8 +1,6 @@
 const authForm = document.getElementById("authForm");
 const authMessage = document.getElementById("authMessage");
 const authPassword = document.getElementById("authPassword");
-const authPasswordConfirm = document.getElementById("authPasswordConfirm");
-const confirmPasswordRow = document.getElementById("confirmPasswordRow");
 const authSubmit = document.getElementById("authSubmit");
 let setupRequired = false;
 
@@ -21,10 +19,8 @@ async function initializeAuthPage() {
     document.getElementById("authDescription").textContent = setupRequired
       ? "Create the first administrator account to secure this clinic. Use a password with at least 12 characters."
       : "Sign in to access the clinic dashboard.";
-    confirmPasswordRow.hidden = !setupRequired;
     authPassword.autocomplete = setupRequired ? "new-password" : "current-password";
     authPassword.minLength = setupRequired ? 12 : 0;
-    authPasswordConfirm.required = setupRequired;
     authSubmit.textContent = setupRequired ? "Create admin account" : "Sign in";
   } catch (error) {
     authMessage.textContent = error.message;
@@ -35,11 +31,6 @@ async function initializeAuthPage() {
 authForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   authMessage.textContent = "";
-  if (setupRequired && authPassword.value !== authPasswordConfirm.value) {
-    authMessage.textContent = "The passwords do not match.";
-    authPasswordConfirm.focus();
-    return;
-  }
 
   authSubmit.disabled = true;
   authSubmit.textContent = setupRequired ? "Creating account..." : "Signing in...";

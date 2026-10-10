@@ -210,6 +210,41 @@ try {
             sendJson(['authenticated' => true, 'username' => $admin['username']]);
         }
 
+        if ($action === 'change-password') {
+            if (!isset($_SESSION['admin'])) {
+                sendJson(['error' => 'Authentication required.'], 401);
+            }
+
+            $currentPassword = (string)($input['currentPassword'] ?? '');
+            $newPassword = (string)($input['password'] ?? '');
+            $passwordConfirm = (string)($input['passwordConfirm'] ?? '');
+            if ($newPassword !== $passwordConfirm) {
+                sendJson(['error' => 'The new passwords do not match.'], 422);
+            }
+            if (strlen($newPassword) < 12 || strlen($newPassword) > 72) {
+                sendJson(['error' => 'Use a password between 12 and 72 characters.'], 422);
+            }
+
+            $statement = $pdo->prepare(
+                "SELECT password_hash FROM users WHERE username = :username AND role = 'admin' LIMIT 1"
+            );
+            $statement->execute(['username' => $_SESSION['admin']['username']]);
+            $admin = $statement->fetch();
+            if (!$admin || !password_verify($currentPassword, $admin['password_hash'])) {
+                sendJson(['error' => 'The current password is incorrect.'], 422);
+            }
+
+            $statement = $pdo->prepare(
+                "UPDATE users SET password_hash = :password_hash WHERE username = :username AND role = 'admin'"
+            );
+            $statement->execute([
+                'password_hash' => password_hash($newPassword, PASSWORD_DEFAULT),
+                'username' => $_SESSION['admin']['username'],
+            ]);
+            session_regenerate_id(true);
+            sendJson(['passwordChanged' => true]);
+        }
+
         if ($action === 'logout') {
             $_SESSION = [];
             if (ini_get('session.use_cookies')) {
